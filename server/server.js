@@ -4,37 +4,37 @@ const express = require('express');
 const socketIO = require('socket.io');
 
 const {generateMessage} = require('./utils/message');
-const publicPath = path.join(__dirname,'../public');
+const publicPath = path.join(__dirname, '../public');
 const port = process.env.PORT || 3000;
-
 var app = express();
 var server = http.createServer(app);
 var io = socketIO(server);
 
 app.use(express.static(publicPath));
 
-io.on('connection', (socket)=>{
-    console.log('new user connected');
+io.on('connection', (socket) => {
+  console.log('New user connected');
 
-    // Send to the new user only when a connection is made
-    socket.emit('newMessage', generateMessage('Admin', 'Welcome to the Chat App'));
+  socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
 
-    // send to everyone else
-    socket.broadcast.emit('newMessage', generateMessage('Admin', 'New User Joined'));
+  socket.broadcast.emit('newMessage', generateMessage('Admin', 'New user joined'));
 
-    // listens for the createMessage event from client and then sends it out to everyone
-    socket.on('createMessage', (message) =>{
-         console.log('just got a message:', message);
-        io.emit('newMessage', generateMessage(message.from,message.text));
-     });
+  socket.on('createMessage', (message, callback) => {
+    console.log('createMessage', message);
+    io.emit('newMessage', generateMessage(message.from, message.text));
+    callback('This is from the server.');
+    // socket.broadcast.emit('newMessage', {
+    //   from: message.from,
+    //   text: message.text,
+    //   createdAt: new Date().getTime()
+    // });
+  });
 
-        // listens for a disconnnect from client
-        socket.on('disconnect',()=>{
-            console.log('Disconnected from client');
-        })
+  socket.on('disconnect', () => {
+    console.log('User was disconnected');
+  });
 });
 
-
-server.listen(port, ()=>{
-console.log(`Server is up on ${port}`);
+server.listen(port, () => {
+  console.log(`Server is up on ${port}`);
 });
